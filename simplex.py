@@ -1,4 +1,6 @@
 import numpy as np
+import warnings
+warnings.filterwarnings('ignore')
 
 class f:
     def __init__(self, **vars):
