@@ -57,7 +57,7 @@ class f:
         return result == self.b
 
 class Simplex:
-    def __init__(self, obj_fn, *constraints):
+    def __init__(self, obj_fn, *constraints, sense='maximize'):
         '''
         A Simplex method solver to a linear programming problem
         '''
@@ -168,6 +168,8 @@ class Simplex:
                 for j, var in enumerate(self.artificial_vars):
                     self.tableau[2+i,2+len(self.vars)+len(self.slack_vars)+j] = constraints[i].artificial_vars[var]
                 self.tableau[2+i,-1] = constraints[i].b
+            if sense == 'minimize':
+                self.tableau[1,2:-2] *= -1
         #build a canonical tableau
         else:
             self.tableau[0,0] = 1
@@ -181,16 +183,14 @@ class Simplex:
                 for j, var in enumerate(self.slack_vars):
                     self.tableau[1+i,1+len(self.vars)+j] = constraints[i].slack_vars[var]
                 self.tableau[1+i,-1] = constraints[i].b
+            if sense == 'minimize':
+                self.tableau[0,1:-1] *= -1
 
-    def solve(self, type='maximize'):
+    def solve(self):
         '''
         Solve an LP problem. Returns None if the solution is infeasible, otherwise
         return a dictionary of variables mapped to values
         '''
-        #minimization is the same as the maximization of the negative coefficients
-        if type == 'minimize':
-            self.tableau[1,2:-1] *= -1
-
         #convert the tableau into canonical form if necessary
         if not self.canonical:
             self.tableau = self._to_canonical(self.tableau)
@@ -294,16 +294,3 @@ class Simplex:
             for i in range(1, np.size(tableau, axis=0))
         ], dtype=np.float64)
         return new_tableau
-
-z = f(x1=1, x2=1, x3=1, x4=1, x5=1, x6=1, x7=1)
-f1 = f(x1=1, x4=1, x5=1, x6=1, x7=1, b__gte=30)
-f2 = f(x1=1, x2=1, x5=1, x6=1, x7=1, b__gte=20)
-f3 = f(x1=1, x2=1, x3=1, x6=1, x7=1, b__gte=15)
-f4 = f(x1=1, x2=1, x3=1, x4=1, x7=1, b__gte=17)
-f5 = f(x1=1, x2=1, x3=1, x4=1, x5=1, b__gte=19)
-f6 = f(x2=1, x3=1, x4=1, x5=1, x6=1, b__gte=25)
-f7 = f(x3=1, x4=1, x5=1, x6=1, x7=1, b__gte=30)
-
-solver = Simplex(z, f1, f2, f3, f4, f5, f6, f7)
-
-print(solver.solve(type='minimize'))
